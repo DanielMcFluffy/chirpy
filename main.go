@@ -1,18 +1,21 @@
 package main
 
 import (
-  "fmt"
-  "net/http"
+	"fmt"
+	"net/http"
 )
 
-func main() {
-  fmt.Println("HEllo world")
 
+func main() {
   mux := http.NewServeMux()
 
-  fileServerHandler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
-  mux.Handle("/app/", fileServerHandler)
+  apiConfig := &apiConfig{}
 
+  fileServerHandler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
+  mux.Handle("/app/", apiConfig.middlewareMetricsInc(fileServerHandler))
+
+  mux.HandleFunc("/metrics", apiConfig.getFileserverHitsHandler)
+  mux.HandleFunc("/reset", apiConfig.resetFileserverHitsHandler)
   mux.HandleFunc("/healthz", func(res http.ResponseWriter, req *http.Request) {
     res.Header().Set("Content-Type", "text/plain; charset=utf-8")
     res.WriteHeader(200)
@@ -27,4 +30,5 @@ func main() {
     fmt.Println("Unable start server: %w", err)
   }
 
+  fmt.Println("Server running at port 8080")
 }
